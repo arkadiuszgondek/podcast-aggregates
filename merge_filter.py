@@ -6,7 +6,7 @@ from dateutil import parser as dateparser
 from lxml import etree
 
 OUTPUT_FILE = "feed.xml"
-UA = {"User-Agent": "Onet-Podcast-Aggregator/1.2 (+github actions)"}
+UA = {"User-Agent": "Onet-Podcast-Aggregator/1.3 (+github actions)"}
 
 def load_config():
     with open("feeds.yaml", "r", encoding="utf-8") as f:
@@ -55,7 +55,6 @@ def normalize_protocol(url: str) -> str:
     return url
 
 def normalize_url(url: str) -> str:
-    # ogólna normalizacja (na razie tylko protokół względny)
     return normalize_protocol(url) if url else url
 
 def pick_link(e):
@@ -74,13 +73,11 @@ def pick_link(e):
             best = href
     if best:
         return best
-    # fallback: pierwszy link
     if e.get("links"):
         return normalize_url(e["links"][0].get("href"))
     return ""
 
 def pick_image_enclosure(e):
-    # Szukamy image enclosure w RSS (enclosures) lub Atom (links rel=enclosure)
     for en in e.get("enclosures", []):
         typ = (en.get("type") or "").lower()
         if typ.startswith("image/"):
@@ -93,7 +90,6 @@ def pick_image_enclosure(e):
     return None
 
 def guid_for(e):
-    # Preferuj id/guid; fallback hash(link+title)
     for k in ("id", "guid"):
         if e.get(k):
             return str(e[k])
@@ -166,7 +162,7 @@ def main():
     if max_items:
         collected = collected[:max_items]
 
-    # Budowa RSS 2.0 (ujednolicona struktura wyjściowa)
+    # Budowa RSS 2.0
     rss = etree.Element("rss", version="2.0")
     channel = etree.SubElement(rss, "channel")
     etree.SubElement(channel, "title").text = ch.get("title", "Agregat podcastów (7 dni)")
@@ -185,29 +181,30 @@ def main():
         d.text = etree.CDATA(it["html"])
         etree.SubElement(node, "pubDate").text = rfc822(it["pubDate"])
         etree.SubElement(node, "category").text = it["category"]
-
-        # enclosure obrazka (domyśl type=image/jpeg jeśli brak)
         if it["image"]:
             etree.SubElement(node, "enclosure", url=it["image"], type="image/jpeg")
 
-    # --- ZAPIS: wymuszona deklaracja XML jako 1. bajt, bez BOM ---
+    # --- ZAPIS: poprawiony prolog z podwójnymi cudzysłowami ---
     xml_bytes = etree.tostring(
         rss,
         encoding="UTF-8",
         xml_declaration=True,
         pretty_print=False
     )
-    with open(OUTPUT_FILE, "wb") as f:
-        f.write(xml_bytes)
 
-    # szybki self-check: pierwsze 5 znaków to "<?xml"
-    try:
-        with open(OUTPUT_FILE, "rb") as f:
-            start = f.read(5)
-        if start != b"<?xml":
-            print("[WARN] Pierwsze bajty pliku nie są '<?xml' — sprawdź plik/hosting!", file=sys.stderr)
-    except Exception:
-        pass
+    xml_text = xml_bytes.decode("utf-8")
+    if xml_text.startswith("<?xml"):
+        xml_text = xml_text.replace("version='1.0'", 'version="1.0"', 1)
+        xml_text = xml_text.replace("encoding='UTF-8'", 'encoding="UTF-8"', 1)
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8", newline="\n") as f:
+        f.write(xml_text)
+
+    # self-check
+    with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+        first_line = f.readline().strip()
+    if not first_line.startswith('<?xml version="1.0" encoding="UTF-8"?>'):
+        print("[WARN] Prolog XML nie wygląda idealnie:", first_line, file=sys.stderr)
 
     print(f"OK: zapisano {OUTPUT_FILE} ({len(collected)} pozycji).")
 
