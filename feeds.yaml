@@ -1,0 +1,21 @@
+sources:
+  - url: https://kultura.onet.pl/film/najnowsze-filmy.feed
+    label: O serialach
+    match:
+      - o serialach
+    take_image_enclosure: true   # pobierz obrazek z <enclosure>
+
+  - url: https://wiadomosci.onet.pl/kraj.feed
+    label: Raport międzynarodowy
+    match:
+      - raport międzynarodowy
+    take_image_enclosure: false  # nie bierzemy obrazka
+
+window_days: 7
+max_items: 400
+
+channel:
+  title: Onet – Agregat podcastów (ostatnie 7 dni)
+  link: https://www.onet.pl
+  description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
+  language: pl
