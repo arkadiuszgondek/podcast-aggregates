@@ -11,6 +11,14 @@ sources:
       - raport międzynarodowy
     take_image_enclosure: false  # nie bierzemy obrazka
 
+  - url: https://wiadomosci.onet.pl/tylko-w-onecie.feed
+    label: Stan Wyjątkowy
+    match:
+      - stan wyjątkowy
+    title_only: true           # SZUKAJ TYLKO W <title>
+    take_image_enclosure: true # bierzemy obrazek z <link rel="enclosure" type="image/jpeg">
+
+
 window_days: 7
 max_items: 400
 
@@ -19,3 +27,4 @@ channel:
   link: https://www.onet.pl
   description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
   language: pl
+
