@@ -6,7 +6,7 @@ from dateutil import parser as dateparser
 from lxml import etree
 
 OUTPUT_FILE = "feed.xml"
-UA = {"User-Agent": "Onet-Podcast-Aggregator/1.1 (+github actions)"}
+UA = {"User-Agent": "Onet-Podcast-Aggregator/1.2 (+github actions)"}
 
 def load_config():
     with open("feeds.yaml", "r", encoding="utf-8") as f:
@@ -190,8 +190,25 @@ def main():
         if it["image"]:
             etree.SubElement(node, "enclosure", url=it["image"], type="image/jpeg")
 
-    tree = etree.ElementTree(rss)
-    tree.write(OUTPUT_FILE, encoding="utf-8", xml_declaration=True)
+    # --- ZAPIS: wymuszona deklaracja XML jako 1. bajt, bez BOM ---
+    xml_bytes = etree.tostring(
+        rss,
+        encoding="UTF-8",
+        xml_declaration=True,
+        pretty_print=False
+    )
+    with open(OUTPUT_FILE, "wb") as f:
+        f.write(xml_bytes)
+
+    # szybki self-check: pierwsze 5 znaków to "<?xml"
+    try:
+        with open(OUTPUT_FILE, "rb") as f:
+            start = f.read(5)
+        if start != b"<?xml":
+            print("[WARN] Pierwsze bajty pliku nie są '<?xml' — sprawdź plik/hosting!", file=sys.stderr)
+    except Exception:
+        pass
+
     print(f"OK: zapisano {OUTPUT_FILE} ({len(collected)} pozycji).")
 
 if __name__ == "__main__":
