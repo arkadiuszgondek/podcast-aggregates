@@ -6,7 +6,7 @@ from dateutil import parser as dateparser
 from lxml import etree
 
 OUTPUT_FILE = "feed.xml"
-UA = {"User-Agent": "Onet-Podcast-Aggregator/1.4 (+github actions)"}
+UA = {"User-Agent": "Onet-Podcast-Aggregator/1.5 (+github actions)"}
 
 def load_config():
     with open("feeds.yaml", "r", encoding="utf-8") as f:
@@ -39,14 +39,17 @@ def pick_date(e):
     return None
 
 def first_html(e):
-    # Preferuj content[0].value, potem summary, potem description
+    """Zwraca opis HTML bez znaczników <img> (często wstrzykiwanych w newsach)."""
+    html = ""
     if e.get("content") and len(e["content"]) and e["content"][0].get("value"):
-        return e["content"][0]["value"]
-    if e.get("summary"):
-        return e["summary"]
-    if e.get("description"):
-        return e["description"]
-    return ""
+        html = e["content"][0]["value"]
+    elif e.get("summary"):
+        html = e["summary"]
+    elif e.get("description"):
+        html = e["description"]
+    # usuń wszystkie <img ...> (także samozamykające)
+    html = re.sub(r"<img[^>]*>", "", html, flags=re.IGNORECASE)
+    return html.strip()
 
 def normalize_protocol(url: str) -> str:
     # //ocdn.eu/... -> https://ocdn.eu/...
@@ -90,7 +93,7 @@ def pick_image_enclosure(e):
     return None
 
 def normalize_guid_value(val: str) -> str:
-    """Usuwa prefiks 'urn:uuid:' i zwraca czysty GUID; gdy pusty → ''. """
+    """Usuwa prefiks 'urn:uuid:' i zwraca czysty GUID; gdy pusty → ''."""
     if not val:
         return ""
     s = str(val).strip()
@@ -204,7 +207,7 @@ def main():
         node = etree.SubElement(channel, "item")
         guid_el = etree.SubElement(node, "guid")
         guid_el.text = it["guid"]
-        guid_el.set("isPermaLink", "false")  # zawsze jako nie-permalink po normalizacji
+        guid_el.set("isPermaLink", "false")  # po normalizacji GUID nie traktujemy go jako URL
         etree.SubElement(node, "title").text = it["title"]
         if it["link"]:
             etree.SubElement(node, "link").text = it["link"]
@@ -215,14 +218,13 @@ def main():
         if it["image"]:
             etree.SubElement(node, "enclosure", url=it["image"], type="image/jpeg")
 
-    # --- ZAPIS: poprawiony prolog z podwójnymi cudzysłowami ---
+    # --- ZAPIS: prolog z podwójnymi cudzysłowami (dla SM) ---
     xml_bytes = etree.tostring(
         rss,
         encoding="UTF-8",
         xml_declaration=True,
         pretty_print=False
     )
-
     xml_text = xml_bytes.decode("utf-8")
     if xml_text.startswith("<?xml"):
         xml_text = xml_text.replace("version='1.0'", 'version="1.0"', 1)
@@ -231,7 +233,7 @@ def main():
     with open(OUTPUT_FILE, "w", encoding="utf-8", newline="\n") as f:
         f.write(xml_text)
 
-    # self-check
+    # self-check (opcjonalne ostrzeżenie do logów Actions)
     with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
         first_line = f.readline().strip()
     expected = '<?xml version="1.0" encoding="UTF-8"?>'
