@@ -6,7 +6,7 @@ from dateutil import parser as dateparser
 from lxml import etree
 
 OUTPUT_FILE = "feed.xml"
-UA = {"User-Agent": "Onet-Podcast-Aggregator/1.3 (+github actions)"}
+UA = {"User-Agent": "Onet-Podcast-Aggregator/1.4 (+github actions)"}
 
 def load_config():
     with open("feeds.yaml", "r", encoding="utf-8") as f:
@@ -89,10 +89,21 @@ def pick_image_enclosure(e):
                 return normalize_url(L.get("href") or "")
     return None
 
+def normalize_guid_value(val: str) -> str:
+    """Usuwa prefiks 'urn:uuid:' i zwraca czysty GUID; gdy pusty → ''. """
+    if not val:
+        return ""
+    s = str(val).strip()
+    s = re.sub(r"^\s*urn:uuid:\s*", "", s, flags=re.IGNORECASE)
+    return s.strip()
+
 def guid_for(e):
+    # Preferuj id/guid; fallback hash(link+title) — wszystko po normalizacji
     for k in ("id", "guid"):
         if e.get(k):
-            return str(e[k])
+            v = normalize_guid_value(e[k])
+            if v:
+                return v
     base = (e.get("link") or "") + "||" + (e.get("title") or "")
     return hashlib.sha1(base.encode("utf-8")).hexdigest()
 
@@ -118,7 +129,7 @@ def main():
 
     collected, seen = [], set()
 
-    for src in cfg["sources"]:
+    for src in cfg.get("sources", []):
         url = src["url"]
         label = src["label"]
         terms = src.get("match", [])
@@ -162,8 +173,15 @@ def main():
     if max_items:
         collected = collected[:max_items]
 
-    # Budowa RSS 2.0
-    rss = etree.Element("rss", version="2.0")
+    # Budowa RSS 2.0 z bezpiecznymi namespaces (atom, content)
+    rss = etree.Element(
+        "rss",
+        nsmap={
+            "atom": "http://www.w3.org/2005/Atom",
+            "content": "http://purl.org/rss/1.0/modules/content/",
+        },
+        version="2.0",
+    )
     channel = etree.SubElement(rss, "channel")
     etree.SubElement(channel, "title").text = ch.get("title", "Agregat podcastów (7 dni)")
     etree.SubElement(channel, "link").text = ch.get("link", "https://example.com")
@@ -171,9 +189,22 @@ def main():
     etree.SubElement(channel, "language").text = ch.get("language", "pl")
     etree.SubElement(channel, "lastBuildDate").text = rfc822(datetime.now(timezone.utc))
 
+    # Opcjonalny atom:link rel=self — podaj w feeds.yaml: channel.self_url
+    self_url = ch.get("self_url")
+    if self_url:
+        etree.SubElement(
+            channel,
+            "{http://www.w3.org/2005/Atom}link",
+            rel="self",
+            type="application/rss+xml",
+            href=self_url
+        )
+
     for it in collected:
         node = etree.SubElement(channel, "item")
-        etree.SubElement(node, "guid").text = it["guid"]
+        guid_el = etree.SubElement(node, "guid")
+        guid_el.text = it["guid"]
+        guid_el.set("isPermaLink", "false")  # zawsze jako nie-permalink po normalizacji
         etree.SubElement(node, "title").text = it["title"]
         if it["link"]:
             etree.SubElement(node, "link").text = it["link"]
@@ -203,7 +234,8 @@ def main():
     # self-check
     with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
         first_line = f.readline().strip()
-    if not first_line.startswith('<?xml version="1.0" encoding="UTF-8"?>'):
+    expected = '<?xml version="1.0" encoding="UTF-8"?>'
+    if not first_line.startswith(expected):
         print("[WARN] Prolog XML nie wygląda idealnie:", first_line, file=sys.stderr)
 
     print(f"OK: zapisano {OUTPUT_FILE} ({len(collected)} pozycji).")
