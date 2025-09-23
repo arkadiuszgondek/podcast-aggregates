@@ -6,7 +6,8 @@ from dateutil import parser as dateparser
 from lxml import etree
 
 OUTPUT_FILE = "feed.xml"
-UA = {"User-Agent": "Onet-Podcast-Aggregator/1.5 (+github actions)"}
+UA = {"User-Agent": "Onet-Podcast-Aggregator/1.6 (+github actions)"}
+DEFAULT_FALLBACK_IMAGE = "https://sm-cdn.eu/ra4d0wrj7oozutfr.jpg"  # użyty, jeśli channel.fallback_image_url nie jest podane
 
 def load_config():
     with open("feeds.yaml", "r", encoding="utf-8") as f:
@@ -39,7 +40,7 @@ def pick_date(e):
     return None
 
 def first_html(e):
-    """Zwraca opis HTML bez znaczników <img> (często wstrzykiwanych w newsach)."""
+    """Zwraca opis HTML bez <img> (często wstrzykiwanych w newsach)."""
     html = ""
     if e.get("content") and len(e["content"]) and e["content"][0].get("value"):
         html = e["content"][0]["value"]
@@ -81,6 +82,7 @@ def pick_link(e):
     return ""
 
 def pick_image_enclosure(e):
+    # próbuj znaleźć obrazek w źródle
     for en in e.get("enclosures", []):
         typ = (en.get("type") or "").lower()
         if typ.startswith("image/"):
@@ -127,8 +129,13 @@ def main():
     cfg = load_config()
     window_days = int(cfg.get("window_days", 7))
     max_items = int(cfg.get("max_items", 400))
-    ch = cfg.get("channel", {})
+    ch = cfg.get("channel", {}) or {}
     cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
+
+    # globalny fallback (możesz nadpisać w feeds.yaml: channel.fallback_image_url)
+    fallback_image_url = ch.get("fallback_image_url") or DEFAULT_FALLBACK_IMAGE
+    if fallback_image_url:
+        fallback_image_url = normalize_url(fallback_image_url)
 
     collected, seen = [], set()
 
@@ -160,7 +167,11 @@ def main():
 
             html = first_html(e) or ""
             link = pick_link(e) or ""
+
+            # najpierw spróbuj obraz z wpisu, potem globalny fallback
             img = pick_image_enclosure(e) if take_img else None
+            if not img and fallback_image_url:
+                img = fallback_image_url
 
             collected.append({
                 "guid": g,
@@ -207,7 +218,7 @@ def main():
         node = etree.SubElement(channel, "item")
         guid_el = etree.SubElement(node, "guid")
         guid_el.text = it["guid"]
-        guid_el.set("isPermaLink", "false")  # po normalizacji GUID nie traktujemy go jako URL
+        guid_el.set("isPermaLink", "false")
         etree.SubElement(node, "title").text = it["title"]
         if it["link"]:
             etree.SubElement(node, "link").text = it["link"]
