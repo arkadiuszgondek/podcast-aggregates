@@ -26,6 +26,16 @@ sources:
       - Misję Sport
     # szukamy w tytule i opisie (domyślnie), więc NIE ustawiamy title_only
     take_image_enclosure: true
+   
+    # Przegląd Ligowy
+  - url: https://przegladsportowy.onet.pl/.feed
+    label: Przegląd Ligowy
+    match:
+      - Przegląd Ligowy
+      - Przeglądu Ligowego
+      - Przeglądem Ligowym
+      - Przeglądzie Ligowym
+    take_image_enclosure: true
 
 
 
@@ -37,5 +47,6 @@ channel:
   link: https://www.onet.pl
   description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
   language: pl
+
 
 
