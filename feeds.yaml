@@ -40,8 +40,10 @@ sources:
   - url: https://plejada.pl/newsy.feed
     label: WojewódzkiKędzierski
     match:
-      - WojewódzkiKędzierski
+      - WojewódzkiKędziersko
     take_image_enclosure: true
+    fallback_image_url: https://sm-cdn.eu/cyxe14ibd9co0tf0.webp
+
 
 
 
@@ -54,6 +56,7 @@ channel:
   link: https://www.onet.pl
   description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
   language: pl
+
 
 
 
