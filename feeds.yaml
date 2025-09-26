@@ -18,6 +18,16 @@ sources:
     title_only: true           # SZUKAJ TYLKO W <title>
     take_image_enclosure: true # bierzemy obrazek z <link rel="enclosure" type="image/jpeg">
 
+  - url: https://przegladsportowy.onet.pl/.feed
+    label: Misja Sport
+    match:
+      - Misja Sport
+      - Misji Sport
+      - Misję Sport
+    # szukamy w tytule i opisie (domyślnie), więc NIE ustawiamy title_only
+    take_image_enclosure: true
+
+
 
 window_days: 7
 max_items: 400
@@ -27,4 +37,5 @@ channel:
   link: https://www.onet.pl
   description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
   language: pl
+
 
