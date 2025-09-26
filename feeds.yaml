@@ -1,33 +1,48 @@
-sources:
-  - url: https://kultura.onet.pl/film/najnowsze-filmy.feed
-    label: O serialach
-    match:
-      - o serialach
-    take_image_enclosure: true   # pobierz obrazek z <enclosure>
+window_days: 14
+max_items: 400
 
+channel:
+  title: Onet – Agregat podcastów (ostatnie 14 dni)
+  link: https://www.onet.pl
+  description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
+  language: pl
+  # globalny fallback obrazek – gdy źródło nie poda żadnego
+  fallback_image_url: https://sm-cdn.eu/ra4d0wrj7oozutfr.jpg
+  # możesz dodać też:
+  # self_url: https://arkadiuszgondek.github.io/podcast-aggregates/feed.xml
+
+sources:
+  # Raport międzynarodowy
   - url: https://wiadomosci.onet.pl/kraj.feed
     label: Raport międzynarodowy
     match:
-      - raport międzynarodowy
-    take_image_enclosure: false  # nie bierzemy obrazka
+      - Raport międzynarodowy
+    take_image_enclosure: true
 
+  # O serialach
+  - url: https://kultura.onet.pl/film/najnowsze-filmy.feed
+    label: O serialach
+    match:
+      - O serialach
+    take_image_enclosure: true
+
+  # Stan Wyjątkowy
   - url: https://wiadomosci.onet.pl/tylko-w-onecie.feed
     label: Stan Wyjątkowy
     match:
-      - stan wyjątkowy
-    title_only: true           # SZUKAJ TYLKO W <title>
-    take_image_enclosure: true # bierzemy obrazek z <link rel="enclosure" type="image/jpeg">
+      - Stan Wyjątkowy
+    take_image_enclosure: true
 
+  # Misja Sport
   - url: https://przegladsportowy.onet.pl/.feed
     label: Misja Sport
     match:
       - Misja Sport
       - Misji Sport
       - Misję Sport
-    # szukamy w tytule i opisie (domyślnie), więc NIE ustawiamy title_only
     take_image_enclosure: true
-   
-    # Przegląd Ligowy
+
+  # Przegląd Ligowy
   - url: https://przegladsportowy.onet.pl/.feed
     label: Przegląd Ligowy
     match:
@@ -37,33 +52,17 @@ sources:
       - Przeglądzie Ligowym
     take_image_enclosure: true
 
+  # WojewódzkiKędzierski (z własnym fallbackiem)
   - url: https://plejada.pl/newsy.feed
     label: WojewódzkiKędzierski
     match:
-      - WojewódzkiKędziersko
+      - WojewódzkiKędziersk
     take_image_enclosure: true
     fallback_image_url: https://sm-cdn.eu/cyxe14ibd9co0tf0.webp
 
-    - url: https://wiadomosci.onet.pl/tylko-w-onecie.feed
-      label: Naczelni
-      match:
+  # Naczelni
+  - url: https://wiadomosci.onet.pl/tylko-w-onecie.feed
+    label: Naczelni
+    match:
       - Naczelni
     take_image_enclosure: true
-    fallback_image_url: https://sm-cdn.eu/utaxazissckowrtw.avif
-
-
-window_days: 7
-max_items: 400
-
-channel:
-  title: Onet – Agregat podcastów (ostatnie 7 dni)
-  link: https://www.onet.pl
-  description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
-  language: pl
-
-
-
-
-
-
-
