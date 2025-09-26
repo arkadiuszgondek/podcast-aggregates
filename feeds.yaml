@@ -44,8 +44,12 @@ sources:
     take_image_enclosure: true
     fallback_image_url: https://sm-cdn.eu/cyxe14ibd9co0tf0.webp
 
-
-
+    - url: https://wiadomosci.onet.pl/tylko-w-onecie.feed
+      label: Naczelni
+      match:
+      - Naczelni
+    take_image_enclosure: true
+    fallback_image_url: https://sm-cdn.eu/utaxazissckowrtw.avif
 
 
 window_days: 7
@@ -56,6 +60,7 @@ channel:
   link: https://www.onet.pl
   description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
   language: pl
+
 
 
 
