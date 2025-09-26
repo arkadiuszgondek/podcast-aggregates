@@ -37,6 +37,13 @@ sources:
       - Przeglądzie Ligowym
     take_image_enclosure: true
 
+  - url: https://plejada.pl/newsy.feed
+    label: WojewódzkiKędzierski
+    match:
+      - WojewódzkiKędziersk
+    take_image_enclosure: true
+
+
 
 
 window_days: 7
@@ -47,6 +54,7 @@ channel:
   link: https://www.onet.pl
   description: Zbiorczy RSS z wpisami podcastowymi wyłuskanymi z feedów Onetu.
   language: pl
+
 
 
 
