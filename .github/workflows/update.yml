@@ -2,7 +2,8 @@ name: Update Filtered Podcast Feed
 
 on:
   schedule:
-    - cron: '0 4-22/3 * * *'   # 06:00–24:00 CEST co 3h
+    # co 5 godzin, tylko między 6:00–22:00 czasu polskiego (04–20 UTC)
+    - cron: '0 4,9,14,19 * * *'
   workflow_dispatch:
 
 permissions:
